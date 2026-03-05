@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCI ARM Instance Claimer - Live Logs</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0d1117;
+            color: #c9d1d9;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+        }
+        header {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #58a6ff;
+        }
+        #status {
+            font-size: 13px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+        .connected { background: #0d419d; color: #58a6ff; }
+        .disconnected { background: #6e2c00; color: #f0883e; }
+        .error { background: #5a1e1e; color: #f85149; }
+        #log-container {
+            padding: 16px 24px;
+            overflow-y: auto;
+            height: calc(100vh - 65px);
+        }
+        .log-line {
+            padding: 2px 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+        .log-line.success { color: #3fb950; font-weight: bold; }
+        .log-line.error { color: #f85149; }
+        .log-line.warning { color: #f0883e; }
+        .log-line.attempt { color: #58a6ff; }
+        .log-line.info { color: #8b949e; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>OCI ARM Instance Claimer</h1>
+        <span id="status" class="disconnected">Connecting...</span>
+    </header>
+    <div id="log-container"></div>
+
+    <script>
+        const logContainer = document.getElementById('log-container');
+        const statusEl = document.getElementById('status');
+        let autoScroll = true;
+
+        logContainer.addEventListener('scroll', () => {
+            const { scrollTop, scrollHeight, clientHeight } = logContainer;
+            autoScroll = scrollHeight - scrollTop - clientHeight < 50;
+        });
+
+        function classifyLine(text) {
+            if (/SUCCESS/i.test(text)) return 'success';
+            if (/ERROR/i.test(text)) return 'error';
+            if (/Out of host capacity/i.test(text)) return 'warning';
+            if (/--- Attempt #/i.test(text)) return 'attempt';
+            if (/Sleeping|started|Region:/i.test(text)) return 'info';
+            return '';
+        }
+
+        function addLine(text) {
+            const div = document.createElement('div');
+            div.className = 'log-line ' + classifyLine(text);
+            div.textContent = text;
+            logContainer.appendChild(div);
+            if (autoScroll) {
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+        }
+
+        function connect() {
+            const evtSource = new EventSource('/stream');
+
+            evtSource.onopen = () => {
+                statusEl.textContent = 'Connected';
+                statusEl.className = 'connected';
+            };
+
+            evtSource.onmessage = (e) => {
+                if (e.data) {
+                    addLine(e.data);
+                }
+            };
+
+            evtSource.onerror = () => {
+                statusEl.textContent = 'Disconnected - Reconnecting...';
+                statusEl.className = 'disconnected';
+                evtSource.close();
+                setTimeout(connect, 3000);
+            };
+        }
+
+        connect();
+    </script>
+</body>
+</html>

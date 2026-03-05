@@ -1,3 +1,7 @@
+# Composer dependencies
+vendor/
+composer.lock
+
 # Environment variables with credentials
 .env
 .env.local
@@ -10,6 +14,10 @@
 ssh-key-*
 *-key-*
 
+# Cache files
+oci_cache.json
+*.log
+
 # IDE and editor files
 .vscode/
 .idea/
@@ -20,14 +28,6 @@ ssh-key-*
 
 # OS files
 Thumbs.db
-
-# Build and dependency files
-vendor/
-composer.lock
-
-# Cache files
-oci_cache.json
-*.log
 
 # Sensitive backup files
 *.bak
