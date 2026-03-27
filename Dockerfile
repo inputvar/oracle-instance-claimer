@@ -24,7 +24,7 @@ COPY app/ ./
 RUN COMPOSER_ALLOW_SUPERUSER=1 composer dump-autoload --optimize --no-dev
 
 # Copy PEM key file
-COPY varunkargathara67@gmail.com-2026-02-23T20_29_16.921Z.pem /app/oci-key.pem
+COPY oci-key.pem /app/oci-key.pem
 
 # Create log file
 RUN touch /var/log/oci-loop.log
